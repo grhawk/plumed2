@@ -6,14 +6,14 @@ PRJT_RT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 RND=$$
 CLUSTER_COMPILE_DIR="md2:~/plumed2_$RND"
 
-echo "Changing Makefile.user"
 cd $PRJT_RT
 
+echo "MAKE CLEAN"
+make distclean > log_clean
+make fullclean >> log_clean
+
 echo "Coping everything on the cluster"
-
 rsync -uha $PRJT_RT/ $CLUSTER_COMPILE_DIR
-
-exit
 
 set +e pipefile
 cat <<EOF | ssh md2
@@ -25,11 +25,10 @@ set -e pipefail
 echo "COMPILING ON LCMDLC2"
 
 cd ${CLUSTER_COMPILE_DIR/md2:/}/
-echo "MAKE CLEAN"
-make distclean
-./configure --prefix=lcmdlc2
+./configure --prefix=\$PWD/lcmdlc2 &> log_lcmdlc2
 echo "MAKE -j 16"
-make -j 16 > log_lcmdlc2
+make -j 16 &>> log_lcmdlc2
+make install &>> log_lcmdlc2
 
 EOF
 set -e pipefile
@@ -40,10 +39,11 @@ rsync -uha $CLUSTER_COMPILE_DIR/ $PRJT_RT
 
 echo "COMPILING HERE"
 cd $PRJT_RT
-make distclean
-./configure --prefix=$PWD/local
-make -j 16
-make
+#make distclean
+#make fullclean
+./configure --prefix=$PWD/local &> log_local
+make -j 16 &>> log_local
+make install &>> log_local
 
 echo "SYNCRONIZE"
 clusters_sync
