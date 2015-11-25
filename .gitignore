@@ -22,5 +22,5 @@ makefile.dep
 local/
 lcmdlc2/
 install.log
-
+log_local
 
